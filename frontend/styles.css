@@ -1,0 +1,40 @@
+@font-face {
+  font-family: SF Pro Text;
+  font-weight: 500;
+  src: url(/fonts/SFProText-Medium.ttf);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0 auto;
+  --text-secondary: #8287a0;
+  --text-primary: #13141d;
+  --spacing-8: 8px;
+  --spacing-12: 12px;
+  --spacing-16: 16px;
+  --spacing-24: 24px;
+  --spacing-32: 32px;
+  --radius-corner-radius-8: 8px;
+  --text-reversible-text: #fff;
+  --color-gray-1: #13141d;
+  --color-gray-10: #edeef5;
+  --color-gray-11: #f5f7fb;
+  --stroke-default: #edeef5;
+  --bg-primary: #fff;
+  --button-primary: #2b6cb0;
+  font-family: SF Pro Text;
+  font-size: 14px;
+}
+
+h2 {
+  font-size: 20px;
+  line-height: 24px;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
