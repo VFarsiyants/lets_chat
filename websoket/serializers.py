@@ -9,12 +9,14 @@ class ChatSerizlizer(ModelSerializer):
         model = Chat
         fields = '__all__'
 
+    user_id = SerializerMethodField(label=_('User id'))
     email = SerializerMethodField(label=_('Contact email'))
     first_name = SerializerMethodField(label=_('First name'))
     last_name = SerializerMethodField(label=_('Last name'))
     last_message = SerializerMethodField(label=_('Last message'))
     last_message_time = SerializerMethodField(label=_('Last message time'))
     image_url = SerializerMethodField(label=_('Chat image'))
+    is_online = SerializerMethodField(label=_('User online'))
 
     def get_email(self, obj):
         return obj.contact[0].email
@@ -33,3 +35,9 @@ class ChatSerizlizer(ModelSerializer):
 
     def get_image_url(self, obj):
         return str(obj.contact[0].avatar.image.url)
+
+    def get_is_online(self, obj):
+        return obj.contact[0].is_online
+
+    def get_user_id(self, obj):
+        return obj.contact[0].id

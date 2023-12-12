@@ -10,11 +10,29 @@ export const MessageLayout = styled.div`
   width: 100%;
 `;
 export const AvatarImg = styled.img`
+  width: 40px;
+  position: relative;
+`;
+
+export const OnlineStatus = styled.div`
+  position: absolute;
+  border-radius: 100px;
+  width: 12px;
+  height: 12px;
+  background: var(--button-primary, #2b6cb0);
+  right: -2px;
+  bottom: 0;
+  border: solid 2px var(--bg-primary, #fff);
+  border-radius: 50%;
+`;
+
+export const AvatarWrapper = styled.div`
+  position: relative;
   grid-column-start: 1;
   grid-row-start: 1;
   grid-row-end: 3;
-  width: 40px;
 `;
+
 export const ContactLineContainer = styled.div`
   color: var(--text-primary);
   display: flex;

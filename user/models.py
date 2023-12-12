@@ -1,4 +1,3 @@
-from tabnanny import verbose
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.validators import UnicodeUsernameValidator
@@ -34,8 +33,9 @@ class User(AbstractUser):
         verbose_name=_('Last online datetime')
     )
 
-    is_online = models.BooleanField(
-        default=False, verbose_name=_('Is user online'))
+    @property
+    def is_online(self):
+        return self.chat_sessions.exists()
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]
@@ -46,3 +46,12 @@ class User(AbstractUser):
     class Meta:
         verbose_name = "User"
         verbose_name_plural = "Users"
+
+
+class UserChatSession(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='chat_sessions')
+
+    class Meta:
+        verbose_name = "User chat session"
+        verbose_name_plural = "User chat sessions"

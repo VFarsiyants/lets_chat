@@ -8,6 +8,15 @@ export default function Contacts() {
   const { websocket } = useWebsoket();
   const [contacts, setContacts] = useState([]);
 
+  function changeContactOnlineStatus(payload) {
+    const { user_id: userId, is_online: isOnline } = payload;
+    setContacts((contacts) =>
+      contacts.map((item) =>
+        item.user_id === userId ? { ...item, is_online: isOnline } : item
+      )
+    );
+  }
+
   useEffect(() => {
     websocket.waitForSocketConnection(() => {
       websocket.sendMessage({
@@ -16,6 +25,9 @@ export default function Contacts() {
       websocket.addCallbacks({
         "get.chats": (payload) => {
           setContacts(payload);
+        },
+        "user.online": (payload) => {
+          changeContactOnlineStatus(payload);
         },
       });
     });

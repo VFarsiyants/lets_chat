@@ -1,14 +1,22 @@
 from datetime import datetime
 
-from django.db.models import OuterRef, Subquery, Prefetch
+from django.db.models import Prefetch
 
-from user.models import User
-from chat.models import Message, Chat
+from user.models import User, UserChatSession
+from chat.models import Message
 from .serializers import ChatSerizlizer
 
 
 def get_user_chat_ids(user: User):
     return list(user.user_chats.all().values_list('id', flat=True))
+
+
+def get_user_contacts_ids(user: User):
+    chats = user.user_chats.filter(chat_type='PE')
+    contacts = User.objects.filter(
+        user_chats__in=chats
+    ).distinct('id').values_list('id', flat=True)
+    return list(contacts)
 
 
 def create_message(author_id, chat_id, message_text):
@@ -44,3 +52,15 @@ def get_user_chats(user: User):
     data = ChatSerizlizer(chats, many=True).data
 
     return data
+
+
+def create_chat_session(user: User):
+    return UserChatSession.objects.create(user=user)
+
+
+def delete_chat_session(session: UserChatSession):
+    session.delete()
+
+
+def get_user_online_status(user: User):
+    return user.is_online

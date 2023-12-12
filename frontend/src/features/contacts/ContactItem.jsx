@@ -9,6 +9,8 @@ import {
   MessageTime,
   MessageTextLine,
   ContactsItemBox,
+  AvatarWrapper,
+  OnlineStatus,
 } from "./StyledComponents";
 import styled from "styled-components";
 import { formatTime, getMediaUrl } from "../../utils";
@@ -32,6 +34,7 @@ export default function ContactItem({ active, contact }) {
     last_message: lastMsgText,
     last_message_time: lastMsgTime,
     image_url: avatarUrl,
+    is_online: isOnline,
   } = contact;
 
   const contactName = firstName & lastName ? `${firstName} ${lastName}` : email;
@@ -41,7 +44,10 @@ export default function ContactItem({ active, contact }) {
   return (
     <ContactsItemBox active={active}>
       <MessageLayout>
-        <AvatarImg src={getMediaUrl(avatarUrl)} alt="Contact Avatar" />
+        <AvatarWrapper>
+          <AvatarImg src={getMediaUrl(avatarUrl)} alt="Contact Avatar" />
+          {isOnline && <OnlineStatus />}
+        </AvatarWrapper>
         <ContactLineContainer>
           <NameDiv active={active}>{contactName}</NameDiv>
           {readStatus ? (
