@@ -1,6 +1,7 @@
 import styled from "styled-components";
 import Contacts from "../features/contacts/Contacts";
 import { Outlet } from "react-router-dom";
+import { WebsoketProvider } from "../contexts/WebsockerContext";
 
 const Container = styled.div`
   display: flex;
@@ -18,10 +19,12 @@ const ChatBox = styled.div`
 export default function ChatPage() {
   return (
     <Container>
-      <Contacts />
-      <ChatBox>
-        <Outlet />
-      </ChatBox>
+      <WebsoketProvider>
+        <Contacts />
+        <ChatBox>
+          <Outlet />
+        </ChatBox>
+      </WebsoketProvider>
     </Container>
   );
 }

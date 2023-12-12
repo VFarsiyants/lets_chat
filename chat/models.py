@@ -3,10 +3,20 @@ from django.utils.translation import gettext_lazy as _
 
 
 class Chat(models.Model):
+    CHAT_TYPE_CHOICES = [
+        ('PE', 'Personal'),
+        ('GR', 'Group'),
+        ('CH', 'Channel'),
+        ('BT', 'Bot')
+    ]
+
     chat_participants = models.ManyToManyField(
         'user.User', related_name='user_chats',
         verbose_name=_('Participants of the chat')
     )
+
+    chat_type = models.CharField(
+        max_length=2, choices=CHAT_TYPE_CHOICES, default='PE')
 
     class Meta:
         verbose_name = "Chat"

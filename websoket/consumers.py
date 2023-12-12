@@ -3,7 +3,7 @@ import json
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
-from .crud import get_user_chat_ids, get_chat_messages, create_message
+from .crud import get_user_chat_ids, get_chat_messages, create_message, get_user_chats
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -57,11 +57,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'text': message.text,
                 'datetime': str(message.created_at)
             } for message in chat_messages]
-            print(messages)
             await self.send(text_data=json.dumps(messages))
             return
         elif action_type == 'get.chats':
-            await self.send(text_data=json.dumps(self.chats_list_ids))
+            chats = await database_sync_to_async(get_user_chats)(self.user)
+            await self.send(text_data=json.dumps({
+                'type': action_type,
+                'payload': chats
+            }))
             return
 
         raise ValueError(f'Uknown action type: {action_type}')

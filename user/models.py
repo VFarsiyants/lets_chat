@@ -23,6 +23,20 @@ class User(AbstractUser):
         },
     )
 
+    avatar = models.ForeignKey(
+        'file.Image', null=True, blank=True,
+        verbose_name=_('User avatar'),
+        on_delete=models.SET_NULL
+    )
+
+    last_online_datetime = models.DateTimeField(
+        null=True, blank=True,
+        verbose_name=_('Last online datetime')
+    )
+
+    is_online = models.BooleanField(
+        default=False, verbose_name=_('Is user online'))
+
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]
 
