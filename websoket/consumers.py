@@ -11,7 +11,6 @@ from .crud import (delete_chat_session, get_user_chat_ids, get_chat_messages,
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.user = self.scope['user']
-        self.user_group_name = f"user_{self.user.id}"
         self.chat_session = await database_sync_to_async(
             create_chat_session)(self.user)
 
@@ -20,9 +19,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         self.contacts_list_ids = await database_sync_to_async(
             get_user_contacts_ids)(self.user)
-        # TODO maybe this group is not needed anymore
-        await self.channel_layer.group_add(
-            self.user_group_name, self.channel_name)
 
         # groups to receive chat messages
         for chat_id in self.chats_list_ids:
@@ -51,8 +47,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         await database_sync_to_async(delete_chat_session)(self.chat_session)
-        await self.channel_layer.group_discard(
-            self.user_group_name, self.channel_name)
         for chat_id in self.chats_list_ids:
             await self.channel_layer.group_discard(
                 f'chat_{chat_id}', self.channel_name)
