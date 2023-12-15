@@ -16,5 +16,6 @@ export function formatTime(datetime) {
 }
 
 export function getMediaUrl(urlPath) {
+  if (!urlPath) return "";
   return `${BASE_API_URL}${urlPath}`;
 }

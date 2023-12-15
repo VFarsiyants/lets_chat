@@ -9,6 +9,6 @@ const Container = styled.div`
   align-self: stretch;
 `;
 
-export default function ChatHeader() {
+export default function ChatHeader({ chat }) {
   return <Container>ChatHeader</Container>;
 }

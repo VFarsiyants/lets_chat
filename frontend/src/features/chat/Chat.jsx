@@ -2,6 +2,7 @@ import styled from "styled-components";
 import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
 import Messages from "./Messages";
+import { useChat } from "../../contexts/ChatContext";
 
 const ChatContainer = styled.div`
   height: 100%;
@@ -11,11 +12,19 @@ const ChatContainer = styled.div`
 `;
 
 export default function Chat() {
+  const { chat } = useChat();
+
   return (
     <ChatContainer>
-      <ChatHeader />
-      <Messages />
-      <MessageInput />
+      {chat ? (
+        <>
+          <ChatHeader chat={chat} />
+          <Messages chat={chat} />
+          <MessageInput chat={chat} />
+        </>
+      ) : (
+        <p>Select contact to start chating</p>
+      )}
     </ChatContainer>
   );
 }

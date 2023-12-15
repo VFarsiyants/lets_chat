@@ -4,7 +4,7 @@ from django.db.models import Prefetch
 
 from user.models import User, UserChatSession
 from chat.models import Message
-from .serializers import ChatSerizlizer
+from .serializers import ChatSerializer, MessageSerializer
 
 
 def get_user_chat_ids(user: User):
@@ -26,20 +26,16 @@ def create_message(author_id, chat_id, message_text):
         text=message_text,
         author_id=author_id,
     )
-    return message
+    return MessageSerializer(message).data
 
 
 def get_chat_messages(chat_id):
-    return list(Message.objects.filter(chat_id=chat_id))
+    messages = Message.objects.filter(chat_id=chat_id)
+    data = MessageSerializer(messages, many=True).data
+    return data
 
 
 def get_user_chats(user: User):
-    # chats = user.user_chats.annotate(
-    #     email=_get_personal_chat_subq(user, 'email'),
-    #     firstname=_get_personal_chat_subq(user, 'firstname'),
-    #     lastname=_get_personal_chat_subq(user, 'lastname'),
-    #     last_message=
-    # )
 
     chats = user.user_chats.prefetch_related(
         Prefetch(
@@ -49,7 +45,7 @@ def get_user_chats(user: User):
         )
     )
 
-    data = ChatSerizlizer(chats, many=True).data
+    data = ChatSerializer(chats, many=True).data
 
     return data
 

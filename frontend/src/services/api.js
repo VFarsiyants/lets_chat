@@ -14,6 +14,7 @@ export async function getToken(login, password) {
       password: password,
     });
     localStorage.setItem("auth_data", JSON.stringify(response.data));
+    return response.data;
   } catch (error) {
     throw new Error(error);
   }

@@ -72,7 +72,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def send_message(self, event):
         payload = event['payload']
-        await self.send(text_data=json.dumps(payload))
+        await self.send(text_data=json.dumps({
+            'type': 'new.message',
+            'payload': payload
+        }))
 
     async def user_online(self, event):
         await self.send(text_data=json.dumps(event))
@@ -81,21 +84,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
         action_type = action['type']
         if action_type == 'send.message':
             chat_id = action['payload']['chat_id']
-            await database_sync_to_async(create_message)(
+            message = await database_sync_to_async(create_message)(
                 self.user.id, chat_id, action['payload']['text']
             )
+            action['payload'] = message
             await self.channel_layer.group_send(f'chat_{chat_id}', action)
             return
         elif action_type == 'fetch.messages':
             chat_id = action['payload']
             chat_messages = await database_sync_to_async(
                 get_chat_messages)(chat_id)
-            messages = [{
-                'author_id': message.author_id,
-                'text': message.text,
-                'datetime': str(message.created_at)
-            } for message in chat_messages]
-            await self.send(text_data=json.dumps(messages))
+            await self.send(text_data=json.dumps({
+                'type': action_type,
+                'payload': chat_messages
+            }))
             return
         elif action_type == 'get.chats':
             chats = await database_sync_to_async(get_user_chats)(self.user)

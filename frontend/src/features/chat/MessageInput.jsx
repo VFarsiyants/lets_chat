@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import sendSvgUrl from "/send.svg";
 import attachSvgUrl from "/attach.svg";
+import { useWebsoket } from "../../contexts/WebsockerContext";
 
 const Container = styled.div`
   display: flex;
@@ -19,22 +20,56 @@ const StyledInput = styled.textarea`
   align-self: center;
   outline: none;
   box-shadow: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 `;
 
 export default function MessageInput() {
   const [message, setMessage] = useState("");
+  const { websocket } = useWebsoket();
   const ref = useRef();
 
+  const chatId = 1;
+
   useEffect(() => {
+    const maxInputHeight = 150;
     function handleHeight(e) {
-      e.target.style.height = "";
-      console.log("input");
-      e.target.style.height = e.target.scrollHeight + "px";
+      if (+e.target.scrollHeight < maxInputHeight) {
+        e.target.style.height = "";
+        e.target.style.height = e.target.scrollHeight + "px";
+      }
+    }
+    function preventEnterNewLine(e) {
+      if (e.keyCode == 13 && !e.shiftKey) {
+        e.preventDefault();
+      }
     }
     const textArea = ref.current;
     textArea.addEventListener("input", handleHeight);
-    return () => textArea.removeEventListener("input", handleHeight);
+    textArea.addEventListener("keydown", preventEnterNewLine);
+    return () => {
+      textArea.removeEventListener("input", handleHeight);
+      textArea.removeEventListener("keydown", preventEnterNewLine);
+    };
   }, []);
+
+  function handleSendMessage() {
+    if (!message) return;
+    websocket.sendMessage({
+      type: "send.message",
+      payload: {
+        chat_id: chatId,
+        text: message,
+      },
+    });
+    setMessage("");
+    ref.current.style.height = "14px";
+  }
+
+  useEffect(() => {
+    websocket.waitForSocketConnection();
+  }, [websocket]);
 
   return (
     <Container>
@@ -43,8 +78,11 @@ export default function MessageInput() {
         ref={ref}
         value={message}
         onChange={(e) => setMessage(e.target.value)}
+        onKeyUp={(e) => {
+          if (e.code === "Enter" && !e.shiftKey) handleSendMessage();
+        }}
       />
-      <img src={sendSvgUrl} />
+      <img src={sendSvgUrl} onClick={handleSendMessage} />
     </Container>
   );
 }

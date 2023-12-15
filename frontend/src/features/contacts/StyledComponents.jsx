@@ -48,7 +48,7 @@ export const MessageTextLine = styled.div`
   grid-row-start: 2;
   grid-row-end: 3;
   ${(props) =>
-    props.active ? "color: #FFF;" : "color: var(--text-secondary, #8287a0);"}
+    props.$active ? "color: #FFF;" : "color: var(--text-secondary, #8287a0);"}
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
@@ -59,15 +59,15 @@ export const MessageStatusImg = styled(SVG)`
   width: var(--spacing-16, 16px);
   height: var(--spacing-16, 16px);
   path {
-    stroke: ${(props) => (props.active ? "#FFF" : "#2B6CB0")};
-    fill: ${(props) => (props.active ? "#FFF" : "#2B6CB0")};
+    stroke: ${(props) => (props.$active ? "#FFF" : "#2B6CB0")};
+    fill: ${(props) => (props.$active ? "#FFF" : "#2B6CB0")};
   }
 `;
 export const MessageTime = styled.div`
   font-size: 12px;
   color: var(--text-secondary, #8287a0);
   ${(props) =>
-    props.active ? "color: #FFF;" : "color: var(--text-secondary, #8287a0);"}
+    props.$active ? "color: #FFF;" : "color: var(--text-secondary, #8287a0);"}
   white-space: nowrap;
   margin-left: auto;
 `;
@@ -78,7 +78,7 @@ export const NameDiv = styled.div`
   min-height: 0;
   margin-right: auto;
   flex: 1;
-  ${(props) => (props.active ? "color: #FFF;" : "")}
+  ${(props) => (props.$active ? "color: #FFF;" : "")}
 `;
 
 export const ContactsItemBox = styled.div`
@@ -89,7 +89,7 @@ export const ContactsItemBox = styled.div`
   align-items: center;
   border-bottom: 1px solid var(--stroke-default, #edeef5);
   ${(props) =>
-    props.active ? "background-color: var(--button-primary, #2b6cb0);" : ""}
+    props.$active ? "background-color: var(--button-primary, #2b6cb0);" : ""}
 `;
 export const ContactsBox = styled.div`
   height: 100vh;
@@ -125,4 +125,14 @@ export const StyledInput = styled.input`
   background: transparent;
   border: none;
   outline: none;
+`;
+
+export const MessageCount = styled.div`
+  padding: 1px 5px;
+  border-radius: 28px;
+  font-size: 12px;
+  ${(props) =>
+    props.$active
+      ? "color: #2B6CB0; background: #ffffff"
+      : "color: #ffffff; background: #2B6CB0"}
 `;

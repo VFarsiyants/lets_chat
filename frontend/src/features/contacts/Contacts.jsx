@@ -3,10 +3,12 @@ import ContactItem from "./ContactItem";
 import { ContactsBox, ContactsItemWraper } from "./StyledComponents";
 import { useWebsoket } from "../../contexts/WebsockerContext";
 import { useEffect, useState } from "react";
+import { useChat } from "../../contexts/ChatContext";
 
 export default function Contacts() {
   const { websocket } = useWebsoket();
   const [contacts, setContacts] = useState([]);
+  const { chat: selectedChat, setChat: setSelectedChat } = useChat();
 
   function changeContactOnlineStatus(payload) {
     const { user_id: userId, is_online: isOnline } = payload;
@@ -38,7 +40,12 @@ export default function Contacts() {
       <SearchBar />
       <ContactsItemWraper>
         {contacts.map((item) => (
-          <ContactItem key={item.id} contact={item} />
+          <ContactItem
+            key={item.id}
+            contact={item}
+            active={selectedChat?.id === item.id}
+            onChatSelect={() => setSelectedChat(item)}
+          />
         ))}
       </ContactsItemWraper>
     </ContactsBox>

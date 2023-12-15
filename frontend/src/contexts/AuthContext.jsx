@@ -1,21 +1,26 @@
 import { createContext, useContext, useReducer } from "react";
 import { getToken } from "../services/api";
+import { jwtDecode } from "jwt-decode";
 
 const AuthContext = createContext();
 
+function getUserId(accessToken) {
+  const decoded = jwtDecode(accessToken);
+  return decoded.user_id;
+}
+
+const localAuthData = localStorage.getItem("auth_data");
+
 const initialState = {
-  user: null,
-  isAuthenticated: !!localStorage.getItem("auth_data"),
+  user: localAuthData ? getUserId(JSON.parse(localAuthData).access) : null,
 };
 
 function reducer(state, action) {
-  console.log(localStorage.getItem("auth_data"));
   switch (action.type) {
     case "login":
       return {
         ...state,
         user: action.payload,
-        isAuthenticated: true,
       };
     case "logout":
       localStorage.removeItem("auth_data");
@@ -26,16 +31,13 @@ function reducer(state, action) {
 }
 
 function AuthProvider({ children }) {
-  const [{ user, isAuthenticated }, dispatch] = useReducer(
-    reducer,
-    initialState
-  );
+  const [{ user }, dispatch] = useReducer(reducer, initialState);
   async function login(email, password) {
     try {
-      const response = await getToken(email, password);
+      const authData = await getToken(email, password);
       dispatch({
         type: "login",
-        payload: email,
+        payload: getUserId(authData.access),
       });
     } catch (error) {
       console.log(error);
@@ -47,7 +49,7 @@ function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
