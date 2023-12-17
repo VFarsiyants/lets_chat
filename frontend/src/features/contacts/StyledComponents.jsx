@@ -10,8 +10,11 @@ export const MessageLayout = styled.div`
   width: 100%;
 `;
 export const AvatarImg = styled.img`
-  width: 40px;
+  width: 100%;
   position: relative;
+  border-radius: 50%;
+  height: 40px;
+  flex-grow: 0;
 `;
 
 export const OnlineStatus = styled.div`
@@ -31,6 +34,9 @@ export const AvatarWrapper = styled.div`
   grid-column-start: 1;
   grid-row-start: 1;
   grid-row-end: 3;
+  display: flex;
+  align-items: center;
+  flex-grow: 0;
 `;
 
 export const ContactLineContainer = styled.div`

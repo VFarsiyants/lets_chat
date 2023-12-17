@@ -1,20 +1,32 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { WebSocketInstance } from "../services/websoket";
 
 const WebsocketContext = createContext();
 
+let connected = false;
+
 function WebsoketProvider({ children }) {
-  const [websocket] = useState(WebSocketInstance);
   const [isConnected, setIsConnected] = useState(false);
+  useMemo(() => {
+    if (!isConnected) {
+      WebSocketInstance.connect();
+      WebSocketInstance.waitForSocketConnection(() => setIsConnected(true));
+    }
+  }, [isConnected]);
 
   useEffect(() => {
-    websocket.connect();
-    setIsConnected(true);
-    return () => websocket.disconnect();
-  }, [websocket]);
+    function disconnect() {
+      if (connected) {
+        WebSocketInstance.disconnect();
+      }
+    }
+    return disconnect;
+  }, []);
 
   return (
-    <WebsocketContext.Provider value={{ websocket }}>
+    <WebsocketContext.Provider
+      value={{ websocket: WebSocketInstance, websocketReady: isConnected }}
+    >
       {children}
     </WebsocketContext.Provider>
   );

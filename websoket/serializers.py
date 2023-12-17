@@ -1,10 +1,11 @@
-from cProfile import label
-from attr import field
+import pytz
+
 from django.utils.translation import gettext_lazy as _
 from rest_framework.serializers import (
-    ModelSerializer, SerializerMethodField)
+    ModelSerializer, SerializerMethodField, IntegerField, BooleanField)
 
-from chat.models import Chat, Message
+from chat.models import Chat, Message, ReadRecept
+from user.models import User
 
 
 class ChatSerializer(ModelSerializer):
@@ -17,6 +18,9 @@ class ChatSerializer(ModelSerializer):
     last_message_time = SerializerMethodField(label=_('Last message time'))
     image_url = SerializerMethodField(label=_('Chat image'))
     is_online = SerializerMethodField(label=_('User online'))
+    last_seen = SerializerMethodField(
+        label=_('Last time when user was online for personal chats'))
+    unread_count = IntegerField(label=_('Number of unread messages'))
 
     def get_email(self, obj):
         return obj.contact[0].email
@@ -57,8 +61,47 @@ class ChatSerializer(ModelSerializer):
             return obj.contact[0].is_online
         return False
 
+    def get_last_seen(self, obj):
+        if obj.chat_type == 'PE':
+            last_online_date = obj.contact[0].last_online_datetime \
+                or obj.contact[0].last_login
+            if last_online_date is None:
+                return
+            return str(last_online_date)
+        return
+
 
 class MessageSerializer(ModelSerializer):
+    is_read = BooleanField(label=_('Is message read'),
+                           required=False, allow_null=True)
+
     class Meta:
         model = Message
-        fields = ['id', 'author_id', 'text', 'created_at', 'chat_id']
+        fields = ['id', 'author_id', 'text',
+                  'created_at', 'chat_id', 'is_read']
+
+
+class UserOnlineInfoSerializer(ModelSerializer):
+
+    last_seen = SerializerMethodField(
+        label=_('Last time when user was online'))
+
+    class Meta:
+        model = User
+        fields = ['id', 'is_online', 'last_seen']
+
+    def get_last_seen(self, obj):
+        if obj.is_online:
+            return
+        last_online_datetime = obj.last_online_datetime or obj.last_login
+        if last_online_datetime:
+            return str(last_online_datetime.astimezone(pytz.UTC))
+        return
+
+
+class ReadReceiptSerializer(ModelSerializer):
+    chat_id = IntegerField(source='message.chat.id', label=_('Chat id'))
+
+    class Meta:
+        model = ReadRecept
+        fields = '__all__'

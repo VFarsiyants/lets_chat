@@ -17,6 +17,7 @@ class WebSocketService {
   }
 
   connect() {
+    if (this.socketRef) return;
     const webSocketPort = 8000;
     const apiHost = "localhost";
     const token = getLocalAccessToken();
@@ -32,9 +33,10 @@ class WebSocketService {
       this.socketNewMessage(e.data);
     };
     this.socketRef.onerror = (e) => {
-      console.log(e);
+      console.log(e.message);
     };
-    this.socketRef.onclose = () => {
+    this.socketRef.onclose = (e) => {
+      console.log(e);
       if (!this.selfClosed) {
         console.log("websocket is closed, trying to reconnect");
         this.connect();
@@ -54,12 +56,12 @@ class WebSocketService {
 
   socketNewMessage(data) {
     const parsedData = JSON.parse(data);
-    const type = parsedData.type;
+    const eventType = parsedData.event;
     if (Object.keys(this.callbacks).length === 0) {
       return;
     }
-    if (type) {
-      this.callbacks[type](parsedData.payload);
+    if (eventType) {
+      this.callbacks[eventType](parsedData.payload);
     }
   }
 

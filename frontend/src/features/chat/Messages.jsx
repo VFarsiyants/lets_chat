@@ -1,3 +1,5 @@
+import { Fragment } from "react";
+
 import styled from "styled-components";
 import Message from "./Message";
 import { useEffect, useRef, useState } from "react";
@@ -20,37 +22,53 @@ const Container = styled.div`
 
 export default function Messages({ chat }) {
   const [messages, setMessages] = useState([]);
+  const [firstUnreadMessageId, setFirstUnreadMessageId] = useState(null);
   const { websocket } = useWebsoket();
   const { user: currentUserId } = useAuth();
   const ref = useRef();
-
-  useEffect(() => {
-    ref.current.scrollTop = ref.current.scrollHeight;
-  }, [messages]);
+  const scrollToRef = useRef();
 
   const selectedChat = chat.id;
   const chatImageUrl = getMediaUrl(chat.image_url);
 
   useEffect(() => {
-    websocket.waitForSocketConnection(() => {
-      websocket.sendMessage({
-        type: "fetch.messages",
-        payload: selectedChat,
-      });
-      websocket.addCallbacks({
-        "fetch.messages": (payload) => {
-          setMessages(payload);
-        },
-        "new.message": (payload) => {
-          if (payload.chat_id === selectedChat) {
-            setMessages((messages) => [...messages, payload]);
-          }
-        },
-      });
+    websocket.sendMessage({
+      type: "fetch.messages",
+      payload: selectedChat,
+    });
+    websocket.addCallbacks({
+      "fetch.messages": (payload) => {
+        setMessages(payload);
+        setFirstUnreadMessageId(
+          payload.find((message) => message.is_read === false)?.id
+        );
+        if (scrollToRef.current) {
+          scrollToRef.current.scrollIntoView(true);
+        } else {
+          ref.current.scrollTop = ref.current.scrollHeight;
+        }
+      },
+      "new.message": (payload) => {
+        if (payload.chat_id === selectedChat) {
+          setMessages((messages) => [...messages, payload]);
+        }
+        websocket.sendMessage({
+          type: "update.chat",
+          payload: selectedChat,
+        });
+      },
     });
   }, [websocket, selectedChat]);
 
   let previousMessage = null;
+
+  function markMessageAsRead(id) {
+    setMessages((messages) =>
+      messages.map((message) =>
+        message.id === id ? { ...message, is_read: true } : message
+      )
+    );
+  }
 
   return (
     <Container ref={ref}>
@@ -62,14 +80,22 @@ export default function Messages({ chat }) {
           (!previousMessage && message.author_id !== currentUserId);
         previousMessage = message;
         return (
-          <Message
-            key={message.id}
-            messageTime={message.created_at}
-            avatarUrl={showAvatar ? chatImageUrl : undefined}
-            isMyMessage={message.author_id === currentUserId}
-          >
-            {message.text}
-          </Message>
+          <Fragment key={message.id}>
+            {firstUnreadMessageId === message.id && (
+              <p ref={scrollToRef}>Unread messages</p>
+            )}
+            <Message
+              messageTime={message.created_at}
+              showAvatar={showAvatar}
+              avatarUrl={chatImageUrl}
+              chatName={chat.chat_name}
+              isMyMessage={message.author_id === currentUserId}
+              message={message}
+              onRead={() => markMessageAsRead(message.id)}
+            >
+              {message.text}
+            </Message>
+          </Fragment>
         );
       })}
     </Container>

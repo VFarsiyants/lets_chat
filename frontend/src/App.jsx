@@ -6,19 +6,25 @@ import RegisterForm from "./features/login/RegisterForm";
 import ProtectedRoute from "./pages/ProtectedRoute";
 import ForgotPasswordForm from "./features/login/ForgotPasswordForm";
 import { useAuth } from "./contexts/AuthContext";
+import { ChatProvider } from "./contexts/ChatContext";
+import { WebsoketProvider } from "./contexts/WebsockerContext";
 
 function App() {
   const { user: userId } = useAuth();
 
   return (
-    <div>
+    <>
       <BrowserRouter>
         <Routes>
           <Route
             index
             element={
               <ProtectedRoute>
-                <ChatPage />
+                <ChatProvider>
+                  <WebsoketProvider>
+                    <ChatPage />
+                  </WebsoketProvider>
+                </ChatProvider>
               </ProtectedRoute>
             }
           />
@@ -32,8 +38,7 @@ function App() {
           </Route>
         </Routes>
       </BrowserRouter>
-      <LoginPage />
-    </div>
+    </>
   );
 }
 

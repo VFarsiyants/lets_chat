@@ -15,7 +15,7 @@ function ChatProvider({ children }) {
 function useChat() {
   const context = useContext(ChatContext);
   if (context === undefined)
-    throw new Error("AuthContext was used outside AuthProvider");
+    throw new Error("ChatContext was used outside AuthProvider");
   return context;
 }
 

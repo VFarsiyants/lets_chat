@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import Contacts from "../features/contacts/Contacts";
-import { WebsoketProvider } from "../contexts/WebsockerContext";
-import { ChatProvider } from "../contexts/ChatContext";
+import { useWebsoket } from "../contexts/WebsockerContext";
+import { useChat } from "../contexts/ChatContext";
 import Chat from "../features/chat/Chat";
 
 const Container = styled.div`
@@ -12,14 +12,16 @@ const Container = styled.div`
 `;
 
 export default function ChatPage() {
-  return (
-    <Container>
-      <WebsoketProvider>
-        <ChatProvider>
-          <Contacts />
-          <Chat />
-        </ChatProvider>
-      </WebsoketProvider>
-    </Container>
-  );
+  const { chat } = useChat();
+  const { websocketReady } = useWebsoket();
+
+  if (websocketReady)
+    return (
+      <Container>
+        <Contacts />
+        {chat ? <Chat chat={chat} /> : <p>Select contact to start chating</p>}
+      </Container>
+    );
+
+  return <p>Loading...</p>;
 }

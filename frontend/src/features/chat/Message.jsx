@@ -1,5 +1,8 @@
 import styled from "styled-components";
-import { formatTime } from "../../utils";
+import { formatTime, getDefaultImgName } from "../../utils";
+import { useEffect, useRef } from "react";
+import { useWebsoket } from "../../contexts/WebsockerContext";
+import { StyledDefaultAvatar } from "../../ui/StyledDefaultAvatar";
 
 const MessageContainer = styled.div`
   display: grid;
@@ -11,8 +14,9 @@ const MessageContainer = styled.div`
   }
 `;
 
-const StyledImg = styled.img`
+const AvatarWrapper = styled.div`
   grid-column-start: 1;
+  height: 40px;
 `;
 
 const TimeP = styled.p`
@@ -47,23 +51,62 @@ const MessageText = styled.div`
   align-items: flex-start;
   align-items: center;
   margin-right: 0;
-  display: inline-block;
+  overflow: hidden;
   max-width: fit-content;
+  overflow-wrap: break-word;
 `;
 
 export default function Message({
   avatarUrl,
-  children,
   isMyMessage,
-  messageTime,
+  message,
+  onRead,
+  showAvatar,
+  chatName,
 }) {
+  const { created_at: messageTime, text, id, is_read: isRead } = message;
+  const ref = useRef();
+  const { websocket } = useWebsoket();
+
+  let options = {
+    threshold: 1.0,
+  };
+
+  useEffect(() => {
+    function callback(entries, observer) {
+      //send websoket message that is read
+      if (entries[0].isIntersecting && isRead === false) {
+        websocket.sendMessage({
+          type: "message.read",
+          payload: id,
+        });
+        onRead();
+      }
+    }
+    let observer = new IntersectionObserver(callback, options);
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  });
+
   return (
-    <MessageContainer>
-      {avatarUrl && <StyledImg src={avatarUrl} alt="Avatar" />}
-      <MessageWrapper $isMyMessage={isMyMessage}>
-        <MessageText $isMyMessage={isMyMessage}>{children}</MessageText>
-        <TimeP>{formatTime(messageTime)}</TimeP>
-      </MessageWrapper>
-    </MessageContainer>
+    <>
+      <MessageContainer ref={ref}>
+        {showAvatar && (
+          <AvatarWrapper>
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="Avatar" />
+            ) : (
+              <StyledDefaultAvatar>
+                {getDefaultImgName(chatName)}
+              </StyledDefaultAvatar>
+            )}
+          </AvatarWrapper>
+        )}
+        <MessageWrapper $isMyMessage={isMyMessage}>
+          <MessageText $isMyMessage={isMyMessage}>{text}</MessageText>
+          <TimeP>{formatTime(messageTime)}</TimeP>
+        </MessageWrapper>
+      </MessageContainer>
+    </>
   );
 }

@@ -10,27 +10,27 @@ const Container = styled.div`
   align-items: end;
   width: 100%;
   padding: var(--spacing-16, 16px) var(--spacing-12, 12px);
+  background: #fff;
 `;
 
 const StyledInput = styled.textarea`
   width: 100%;
   border: none;
   resize: none;
-  height: 14px;
+  height: 18px;
   align-self: center;
   outline: none;
   box-shadow: none;
+  background: transparent;
   &::-webkit-scrollbar {
     display: none;
   }
 `;
 
-export default function MessageInput() {
+export default function MessageInput({ chat }) {
   const [message, setMessage] = useState("");
   const { websocket } = useWebsoket();
   const ref = useRef();
-
-  const chatId = 1;
 
   useEffect(() => {
     const maxInputHeight = 150;
@@ -59,12 +59,12 @@ export default function MessageInput() {
     websocket.sendMessage({
       type: "send.message",
       payload: {
-        chat_id: chatId,
+        chat_id: chat.id,
         text: message,
       },
     });
     setMessage("");
-    ref.current.style.height = "14px";
+    ref.current.style.height = "18px";
   }
 
   useEffect(() => {
@@ -78,6 +78,7 @@ export default function MessageInput() {
         ref={ref}
         value={message}
         onChange={(e) => setMessage(e.target.value)}
+        placeholder="write a message..."
         onKeyUp={(e) => {
           if (e.code === "Enter" && !e.shiftKey) handleSendMessage();
         }}

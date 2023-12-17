@@ -25,7 +25,6 @@ class Chat(models.Model):
     def __str__(self) -> str:
         participants = self.chat_participants.all()
         participants_str = ' and '.join(str(user) for user in participants[:2])
-        print(participants_str)
         if self.chat_participants.count() > 2:
             return f'{participants_str} and others'
         return participants_str
@@ -48,3 +47,21 @@ class Message(models.Model):
     class Meta:
         verbose_name = "Message"
         verbose_name_plural = "Messages"
+
+
+class ReadRecept(models.Model):
+    created_at = models.DateTimeField(
+        auto_now=True, verbose_name=_('Message read time'))
+
+    message = models.ForeignKey(
+        Message, on_delete=models.CASCADE,
+        related_name='receipt',
+        verbose_name=_('Message')
+    )
+
+    reader = models.ForeignKey(
+        'user.User', on_delete=models.CASCADE, verbose_name=_("Message reader"))
+
+    class Meta:
+        verbose_name = "Read receipt"
+        verbose_name_plural = "Read receipts"
