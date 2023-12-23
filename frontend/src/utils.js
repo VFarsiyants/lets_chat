@@ -4,6 +4,10 @@ export function getLocalAccessToken() {
   return JSON.parse(localStorage.getItem("auth_data"))?.access;
 }
 
+export function getLocalRefreshToken() {
+  return JSON.parse(localStorage.getItem("auth_data"))?.refresh;
+}
+
 export function formatTime(datetime) {
   var time = new Date(datetime);
   return formatAMPM(time);

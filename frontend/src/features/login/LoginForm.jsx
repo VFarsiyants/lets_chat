@@ -41,6 +41,7 @@ export default function LoginForm() {
         <StyledInput
           name="password"
           type="password"
+          autoComplete="on"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
         />

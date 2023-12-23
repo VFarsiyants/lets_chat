@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+
 import { WebSocketInstance } from "../services/websoket";
+import { useAuth } from "./AuthContext";
 
 const WebsocketContext = createContext();
 
@@ -7,10 +9,13 @@ let connected = false;
 
 function WebsoketProvider({ children }) {
   const [isConnected, setIsConnected] = useState(false);
+
   useMemo(() => {
     if (!isConnected) {
       WebSocketInstance.connect();
-      WebSocketInstance.waitForSocketConnection(() => setIsConnected(true));
+      WebSocketInstance.waitForSocketConnection(() => {
+        setIsConnected(true);
+      });
     }
   }, [isConnected]);
 

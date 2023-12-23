@@ -27,6 +27,7 @@ const TimeP = styled.p`
 
 const MessageWrapper = styled.div`
   grid-column-start: 2;
+  box-sizing: border-box;
   display: flex;
   justify-content: ${(props) => (props.$isMyMessage ? "end" : "unset")};
   width: 75%;
@@ -48,12 +49,11 @@ const MessageText = styled.div`
       : "var(--text-primary, #13141d)"};
   padding: var(--Spacing-4, 4px) var(--spacing-8, 8px);
   grid-column-start: 2;
-  align-items: flex-start;
   align-items: center;
   margin-right: 0;
-  overflow: hidden;
+  display: flex;
   max-width: fit-content;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
 `;
 
 export default function Message({

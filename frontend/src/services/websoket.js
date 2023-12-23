@@ -61,7 +61,8 @@ class WebSocketService {
       return;
     }
     if (eventType) {
-      this.callbacks[eventType](parsedData.payload);
+      const callback = this.callbacks[eventType];
+      if (callback) callback(parsedData.payload);
     }
   }
 

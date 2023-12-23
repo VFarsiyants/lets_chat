@@ -4,34 +4,36 @@ import { jwtDecode } from "jwt-decode";
 
 const AuthContext = createContext();
 
-function getUserId(accessToken) {
-  const decoded = jwtDecode(accessToken);
-  return decoded.user_id;
+function getUserId() {
+  const localAuthData = localStorage.getItem("auth_data");
+  const decoded = localAuthData
+    ? jwtDecode(JSON.parse(localAuthData).access)
+    : null;
+  return decoded?.user_id;
 }
 
-const localAuthData = localStorage.getItem("auth_data");
-
-const initialState = {
-  user: localAuthData ? getUserId(JSON.parse(localAuthData).access) : null,
-};
+function getLocalUserInfo() {
+  return {
+    user: getUserId(),
+  };
+}
 
 function reducer(state, action) {
   switch (action.type) {
     case "login":
-      return {
-        ...state,
-        user: action.payload,
-      };
+      return getLocalUserInfo();
     case "logout":
       localStorage.removeItem("auth_data");
-      return initialState;
+      return getLocalUserInfo();
+    case "refresh":
+      return getLocalUserInfo();
     default:
       throw new Error("Uknown action");
   }
 }
 
 function AuthProvider({ children }) {
-  const [{ user }, dispatch] = useReducer(reducer, initialState);
+  const [{ user }, dispatch] = useReducer(reducer, getLocalUserInfo());
   async function login(email, password) {
     try {
       const authData = await getToken(email, password);
