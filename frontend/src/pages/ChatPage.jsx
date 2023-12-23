@@ -3,6 +3,7 @@ import Contacts from "../features/contacts/Contacts";
 import { useWebsoket } from "../contexts/WebsockerContext";
 import { useChat } from "../contexts/ChatContext";
 import Chat from "../features/chat/Chat";
+import UserProfile from "../features/userProfile/UserProfile";
 
 const Container = styled.div`
   display: flex;
@@ -18,8 +19,11 @@ export default function ChatPage() {
   if (websocketReady)
     return (
       <Container>
-        <Contacts />
-        {chat ? <Chat chat={chat} /> : <p>Select contact to start chating</p>}
+        <UserProfile>
+          <Contacts />
+          {chat ? <Chat chat={chat} /> : <p>Select contact to start chating</p>}
+          <UserProfile.Page />
+        </UserProfile>
       </Container>
     );
 

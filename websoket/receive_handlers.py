@@ -4,7 +4,7 @@ from channels.layers import get_channel_layer
 from channels.db import database_sync_to_async
 
 from .crud import (create_message, get_chat_messages, get_user_chats, 
-                   create_read_receipt)
+                   create_read_receipt, get_user_info)
 
 
 channel_layer = get_channel_layer()
@@ -56,3 +56,12 @@ async def notify_update_chat(consumer, action, *args, **kwargs):
     }))
     await channel_layer.group_send(
         f'chat_{chat_id}', action)
+    
+
+async def send_current_user_info(consumer, *args, **kwargs):
+    current_user_data = await database_sync_to_async(get_user_info)(
+            consumer.user)
+    await consumer.send(text_data=json.dumps({
+        'event': 'current.user',
+        'payload': current_user_data
+    }))

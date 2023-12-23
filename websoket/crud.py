@@ -9,11 +9,15 @@ from user.models import User, UserChatSession
 from chat.models import Message, ReadRecept
 from .serializers import (
     ChatSerializer, MessageSerializer, UserOnlineInfoSerializer,
-    ReadReceiptSerializer)
+    ReadReceiptSerializer, UserInfoSerializer)
 
 
 def get_user_chat_ids(user: User):
     return list(user.user_chats.all().values_list('id', flat=True))
+
+
+def get_user_info(user: User):
+    return UserInfoSerializer(user).data
 
 
 def get_user_contacts_ids(user: User):

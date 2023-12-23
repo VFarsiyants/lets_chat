@@ -5,32 +5,37 @@ import { useAuth } from "./AuthContext";
 
 const WebsocketContext = createContext();
 
-let connected = false;
-
 function WebsoketProvider({ children }) {
   const [isConnected, setIsConnected] = useState(false);
+  const { setCurrentUser } = useAuth();
 
-  useMemo(() => {
+  useEffect(() => {
     if (!isConnected) {
       WebSocketInstance.connect();
       WebSocketInstance.waitForSocketConnection(() => {
         setIsConnected(true);
+        WebSocketInstance.sendMessage({
+          type: "get.current_user",
+        });
       });
     }
-  }, [isConnected]);
+    WebSocketInstance.addCallbacks({
+      "current.user": (payload) => setCurrentUser(payload),
+    });
+  }, [setCurrentUser, isConnected]);
 
-  useEffect(() => {
-    function disconnect() {
-      if (connected) {
-        WebSocketInstance.disconnect();
-      }
-    }
-    return disconnect;
-  }, []);
+  function disconnect() {
+    WebSocketInstance.disconnect();
+    setIsConnected(false);
+  }
 
   return (
     <WebsocketContext.Provider
-      value={{ websocket: WebSocketInstance, websocketReady: isConnected }}
+      value={{
+        websocket: WebSocketInstance,
+        websocketReady: isConnected,
+        disconnect,
+      }}
     >
       {children}
     </WebsocketContext.Provider>

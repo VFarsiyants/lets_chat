@@ -2,6 +2,7 @@ import styled from "styled-components";
 import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
 import Messages from "./Messages";
+import UserProfile from "../userProfile/UserProfile";
 
 const ChatContainer = styled.div`
   height: 100%;

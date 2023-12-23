@@ -32,6 +32,12 @@ export default function Messages({ chat }) {
   const chatImageUrl = getMediaUrl(chat.image_url);
 
   useEffect(() => {
+    if (!firstUnreadMessageId) {
+      ref.current.scrollTop = ref.current.scrollHeight;
+    }
+  }, [firstUnreadMessageId]);
+
+  useEffect(() => {
     websocket.sendMessage({
       type: "fetch.messages",
       payload: selectedChat,
@@ -44,8 +50,6 @@ export default function Messages({ chat }) {
         );
         if (scrollToRef.current) {
           scrollToRef.current.scrollIntoView(true);
-        } else {
-          ref.current.scrollTop = ref.current.scrollHeight;
         }
       },
       "new.message": (payload) => {

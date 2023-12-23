@@ -2,10 +2,25 @@ import pytz
 
 from django.utils.translation import gettext_lazy as _
 from rest_framework.serializers import (
-    ModelSerializer, SerializerMethodField, IntegerField, BooleanField)
+    ModelSerializer, SerializerMethodField, IntegerField, BooleanField, CharField)
 
 from chat.models import Chat, Message, ReadRecept
 from user.models import User
+
+
+class UserInfoSerializer(ModelSerializer):
+
+    user_contact_name = SerializerMethodField(label=_('User contact string'))
+    avatar_url = CharField(source='avatar.image.url', label=_('User avatar url'))
+
+    class Meta:
+        model = User
+        fields = '__all__'
+
+    def get_user_contact_name(self, obj):
+        if obj.first_name and obj.last_name:
+            return f'{obj.first_name} {obj.last_name}'
+        return obj.email
 
 
 class ChatSerializer(ModelSerializer):

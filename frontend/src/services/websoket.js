@@ -3,6 +3,8 @@ import { getLocalAccessToken } from "../utils";
 class WebSocketService {
   static instance = null;
   callbacks = {};
+  closeCallback = null;
+  openCallback = null;
 
   static getInstance() {
     if (!WebSocketService.instance) {
@@ -26,8 +28,9 @@ class WebSocketService {
     }
     const path = `ws://${apiHost}:${webSocketPort}/ws/?token=${token}`;
     this.socketRef = new WebSocket(path);
-    this.socketRef.onopen = () => {
+    this.socketRef.onopen = (e) => {
       console.log("websocket open");
+      if (this.openCallback) this.openCallback(e);
     };
     this.socketRef.onmessage = (e) => {
       this.socketNewMessage(e.data);
@@ -39,6 +42,7 @@ class WebSocketService {
       console.log(e);
       if (!this.selfClosed) {
         console.log("websocket is closed, trying to reconnect");
+        if (this.closeCallback) this.closeCallback(e);
         this.connect();
       } else {
         this.selfClosed = false;
@@ -51,6 +55,7 @@ class WebSocketService {
     if (this?.socketRef) {
       this.selfClosed = true;
       this.socketRef.close(4000, "closed by user");
+      this.socketRef = null;
     }
   }
 
@@ -70,6 +75,14 @@ class WebSocketService {
     for (const [name, callback] of Object.entries(callbacks)) {
       this.callbacks[name] = callback;
     }
+  }
+
+  addCloseCallback(callback) {
+    this.closeCallback = callback;
+  }
+
+  addOpenCallback(callback) {
+    this.openCallback = callback;
   }
 
   state() {

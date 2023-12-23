@@ -27,13 +27,18 @@ function reducer(state, action) {
       return getLocalUserInfo();
     case "refresh":
       return getLocalUserInfo();
+    case "connect":
+      return { ...state, userInfo: action.payload };
     default:
       throw new Error("Uknown action");
   }
 }
 
 function AuthProvider({ children }) {
-  const [{ user }, dispatch] = useReducer(reducer, getLocalUserInfo());
+  const [{ user, userInfo }, dispatch] = useReducer(
+    reducer,
+    getLocalUserInfo()
+  );
   async function login(email, password) {
     try {
       const authData = await getToken(email, password);
@@ -50,8 +55,17 @@ function AuthProvider({ children }) {
     dispatch({ type: "logout" });
   }
 
+  function setCurrentUser(userInfo) {
+    dispatch({
+      type: "connect",
+      payload: userInfo,
+    });
+  }
+
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, login, logout, setCurrentUser, userInfo }}
+    >
       {children}
     </AuthContext.Provider>
   );

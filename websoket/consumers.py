@@ -3,12 +3,12 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 from .crud import (delete_chat_session, get_user_chat_ids, create_chat_session, 
-                   get_user_contacts_ids,
+                   get_user_contacts_ids, get_user_info,
                    get_unread_messages_count, retrieve_chat, retrieve_message)
 from .groups import (add_to_chat_groups, add_to_user_online_status_groups, 
                      discard_chanel_from_chat_groups, discard_channel_from_user_statuses_group)
 from .receive_handlers import (send_message_to_chat, send_chat_messages, 
-                               send_chats, send_read_receipt, notify_update_chat)
+                               send_chats, send_read_receipt, notify_update_chat, send_current_user_info)
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -19,6 +19,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         'fetch.messages': send_chat_messages,
         'message.read': send_read_receipt,
         'update.chat': notify_update_chat,
+        'get.current_user': send_current_user_info
     }
 
     async def connect(self):
