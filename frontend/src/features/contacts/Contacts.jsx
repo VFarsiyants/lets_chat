@@ -32,7 +32,7 @@ export default function Contacts() {
   );
 
   function changeContactUnreadMessagesCount(payload) {
-    const { chat_id: chatId, unread_count: unreadCount } = payload;
+    const { chat_id: chatId, total_unread_count: unreadCount } = payload;
     setContacts((contacts) =>
       contacts.map((item) =>
         item.id === chatId ? { ...item, unread_count: unreadCount } : item

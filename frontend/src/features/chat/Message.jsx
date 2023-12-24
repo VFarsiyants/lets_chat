@@ -74,7 +74,6 @@ export default function Message({
 
   useEffect(() => {
     function callback(entries, observer) {
-      //send websoket message that is read
       if (entries[0].isIntersecting && isRead === false) {
         websocket.sendMessage({
           type: "message.read",
@@ -89,24 +88,22 @@ export default function Message({
   });
 
   return (
-    <>
-      <MessageContainer ref={ref}>
-        {showAvatar && (
-          <AvatarWrapper>
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="Avatar" />
-            ) : (
-              <StyledDefaultAvatar>
-                {getDefaultImgName(chatName)}
-              </StyledDefaultAvatar>
-            )}
-          </AvatarWrapper>
-        )}
-        <MessageWrapper $isMyMessage={isMyMessage}>
-          <MessageText $isMyMessage={isMyMessage}>{text}</MessageText>
-          <TimeP>{formatTime(messageTime)}</TimeP>
-        </MessageWrapper>
-      </MessageContainer>
-    </>
+    <MessageContainer ref={ref}>
+      {showAvatar && (
+        <AvatarWrapper>
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="Avatar" />
+          ) : (
+            <StyledDefaultAvatar>
+              {getDefaultImgName(chatName)}
+            </StyledDefaultAvatar>
+          )}
+        </AvatarWrapper>
+      )}
+      <MessageWrapper $isMyMessage={isMyMessage}>
+        <MessageText $isMyMessage={isMyMessage}>{text}</MessageText>
+        <TimeP>{formatTime(messageTime)}</TimeP>
+      </MessageWrapper>
+    </MessageContainer>
   );
 }

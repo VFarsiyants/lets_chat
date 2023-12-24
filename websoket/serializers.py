@@ -1,8 +1,12 @@
 import pytz
-
 from django.utils.translation import gettext_lazy as _
 from rest_framework.serializers import (
-    ModelSerializer, SerializerMethodField, IntegerField, BooleanField, CharField)
+    BooleanField,
+    CharField,
+    IntegerField,
+    ModelSerializer,
+    SerializerMethodField,
+)
 
 from chat.models import Chat, Message, ReadRecept
 from user.models import User
@@ -11,7 +15,7 @@ from user.models import User
 class UserInfoSerializer(ModelSerializer):
 
     user_contact_name = SerializerMethodField(label=_('User contact string'))
-    avatar_url = CharField(source='avatar.image.url', label=_('User avatar url'))
+    avatar_url = SerializerMethodField(label=_('User avatar url'))
 
     class Meta:
         model = User
@@ -21,6 +25,11 @@ class UserInfoSerializer(ModelSerializer):
         if obj.first_name and obj.last_name:
             return f'{obj.first_name} {obj.last_name}'
         return obj.email
+
+    def get_avatar_url(self, obj):
+        if obj.avatar:
+            return obj.avatar.image.url
+        return None
 
 
 class ChatSerializer(ModelSerializer):
@@ -98,20 +107,17 @@ class MessageSerializer(ModelSerializer):
 
 class UserOnlineInfoSerializer(ModelSerializer):
 
-    last_seen = SerializerMethodField(
+    last_seen = CharField(
         label=_('Last time when user was online'))
+
+    is_online = BooleanField(
+        source='is_user_online',
+        label=_('User online status')
+    )
 
     class Meta:
         model = User
-        fields = ['id', 'is_online', 'last_seen']
-
-    def get_last_seen(self, obj):
-        if obj.is_online:
-            return
-        last_online_datetime = obj.last_online_datetime or obj.last_login
-        if last_online_datetime:
-            return str(last_online_datetime.astimezone(pytz.UTC))
-        return
+        fields = ['id', 'last_seen', 'is_online']
 
 
 class ReadReceiptSerializer(ModelSerializer):

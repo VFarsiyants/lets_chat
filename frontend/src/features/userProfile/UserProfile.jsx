@@ -1,8 +1,16 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useRef, useState } from "react";
 import styled from "styled-components";
 
 import UserActions from "./UserActions";
 import EditUser from "./EditUser";
+import { HorizontalContainer } from "../../ui/HorizontalContainer";
+import { Transition } from "react-transition-group";
+
+const UserProfilePage = styled(HorizontalContainer)`
+  position: absolute;
+  background-color: #edf2f7;
+  width: 100%;
+`;
 
 const UserProfileContext = createContext();
 
@@ -25,7 +33,11 @@ export function UserProfile({ children }) {
 
 function Open({ children }) {
   const { open } = useContext(UserProfileContext);
-  return <div onClick={open}>{children}</div>;
+  return (
+    <div onClick={open} style={{ cursor: "pointer" }}>
+      {children}
+    </div>
+  );
 }
 
 function Close({ children }) {
@@ -33,26 +45,43 @@ function Close({ children }) {
   return <div onClick={close}>{children}</div>;
 }
 
-const UserProfilePage = styled.div`
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  background-color: #edf2f7;
-  overflow: hidden;
-`;
+const duration = 300;
+
+const defaultStyle = {
+  transform: "translateX(-100vw)",
+  transition: `all ${duration}ms ease-in-out`,
+};
+
+const transitionStyles = {
+  entering: { transform: "translateX(0)" },
+  entered: { transform: "translateX(0)" },
+  exiting: { transform: "translateX(-100vw)" },
+  exited: { transform: "translateX(-100vw)" },
+};
 
 function Page() {
   const { isOpen } = useContext(UserProfileContext);
+  const nodeRef = useRef();
 
-  if (isOpen) {
-    return (
-      <UserProfilePage>
-        <UserActions />
-        <EditUser />
-      </UserProfilePage>
-    );
-  }
+  return (
+    <Transition
+      nodeRef={nodeRef}
+      in={isOpen}
+      timeout={duration}
+      mountOnEnter={true}
+      unmountOnExit={true}
+    >
+      {(state) => (
+        <UserProfilePage
+          ref={nodeRef}
+          style={{ ...defaultStyle, ...transitionStyles[state] }}
+        >
+          <UserActions />
+          <EditUser />
+        </UserProfilePage>
+      )}
+    </Transition>
+  );
 }
 
 UserProfile.Open = Open;

@@ -1,8 +1,8 @@
-import { Fragment } from "react";
+import { Fragment, useReducer } from "react";
 
 import styled from "styled-components";
 import Message from "./Message";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useWebsoket } from "../../contexts/WebsockerContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { getMediaUrl } from "../../utils";
@@ -20,22 +20,69 @@ const Container = styled.div`
   }
 `;
 
+const initialState = {
+  messages: [],
+  firstUnreadMessageId: null,
+  toBottom: false,
+};
+
+function reducer(state, action) {
+  switch (action.type) {
+    case "fetch_messages":
+      return {
+        ...state,
+        messages: action.payload,
+        firstUnreadMessageId: action.payload.find(
+          (message) => message.is_read === false
+        )?.id,
+      };
+    case "new_message":
+      return {
+        ...state,
+        messages: [...state.messages, action.payload.message],
+        toBottom: action.payload.toBottom,
+      };
+    case "mark_as_read":
+      return {
+        ...state,
+        messages: state.messages.map((message) =>
+          message.id === action.payload
+            ? { ...message, is_read: true }
+            : message
+        ),
+      };
+    case "unstick_from_bottom":
+      return { ...state, toBottom: false };
+    default:
+      throw new Error("Uknown action");
+  }
+}
+
 export default function Messages({ chat }) {
-  const [messages, setMessages] = useState([]);
-  const [firstUnreadMessageId, setFirstUnreadMessageId] = useState(null);
+  const [{ messages, firstUnreadMessageId, toBottom }, dispatch] = useReducer(
+    reducer,
+    initialState
+  );
+
   const { websocket } = useWebsoket();
   const { user: currentUserId } = useAuth();
+
   const ref = useRef();
   const scrollToRef = useRef();
 
   const selectedChat = chat.id;
   const chatImageUrl = getMediaUrl(chat.image_url);
 
+  function scrollToBottom() {
+    ref.current.scrollTop = ref.current.scrollHeight;
+  }
+
   useEffect(() => {
-    if (!firstUnreadMessageId) {
-      ref.current.scrollTop = ref.current.scrollHeight;
-    }
-  }, [firstUnreadMessageId]);
+    if (toBottom) scrollToBottom();
+    dispatch({
+      type: "unstick_from_bottom",
+    });
+  }, [dispatch, toBottom]);
 
   useEffect(() => {
     websocket.sendMessage({
@@ -44,17 +91,25 @@ export default function Messages({ chat }) {
     });
     websocket.addCallbacks({
       "fetch.messages": (payload) => {
-        setMessages(payload);
-        setFirstUnreadMessageId(
-          payload.find((message) => message.is_read === false)?.id
-        );
+        dispatch({
+          type: "fetch_messages",
+          payload: payload,
+        });
         if (scrollToRef.current) {
           scrollToRef.current.scrollIntoView(true);
-        }
+        } else scrollToBottom();
       },
-      "new.message": (payload) => {
-        if (payload.chat_id === selectedChat) {
-          setMessages((messages) => [...messages, payload]);
+      "new.message": (resPayload) => {
+        if (resPayload.chat_id === selectedChat) {
+          const shouldScroll =
+            ref.current.scrollHeight -
+              ref.current.scrollTop -
+              ref.current.clientHeight ===
+              0 || resPayload.author_id === currentUserId;
+          dispatch({
+            type: "new_message",
+            payload: { message: resPayload, toBottom: shouldScroll },
+          });
         }
         websocket.sendMessage({
           type: "update.chat",
@@ -62,17 +117,16 @@ export default function Messages({ chat }) {
         });
       },
     });
-  }, [websocket, selectedChat]);
-
-  let previousMessage = null;
+  }, [websocket, selectedChat, currentUserId]);
 
   function markMessageAsRead(id) {
-    setMessages((messages) =>
-      messages.map((message) =>
-        message.id === id ? { ...message, is_read: true } : message
-      )
-    );
+    dispatch({
+      type: "mark_as_read",
+      payload: id,
+    });
   }
+
+  let previousMessage = null;
 
   return (
     <Container ref={ref}>
@@ -86,7 +140,12 @@ export default function Messages({ chat }) {
         return (
           <Fragment key={message.id}>
             {firstUnreadMessageId === message.id && (
-              <p ref={scrollToRef}>Unread messages</p>
+              <p
+                ref={scrollToRef}
+                style={{ marginTop: previousMessage ? "auto" : "unset" }}
+              >
+                Unread messages
+              </p>
             )}
             <Message
               messageTime={message.created_at}

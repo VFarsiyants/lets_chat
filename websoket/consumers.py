@@ -1,14 +1,32 @@
+import asyncio
 import json
+
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
-from .crud import (delete_chat_session, get_user_chat_ids, create_chat_session, 
-                   get_user_contacts_ids, get_user_info,
-                   get_unread_messages_count, retrieve_chat, retrieve_message)
-from .groups import (add_to_chat_groups, add_to_user_online_status_groups, 
-                     discard_chanel_from_chat_groups, discard_channel_from_user_statuses_group)
-from .receive_handlers import (send_message_to_chat, send_chat_messages, 
-                               send_chats, send_read_receipt, notify_update_chat, send_current_user_info)
+from .crud import (
+    create_chat_session,
+    delete_chat_session,
+    get_unread_messages_count,
+    get_user_chat_ids,
+    get_user_contacts_ids,
+    retrieve_chat,
+    retrieve_message,
+)
+from .groups import (
+    add_to_chat_groups,
+    add_to_user_online_status_groups,
+    discard_chanel_from_chat_groups,
+    discard_channel_from_user_statuses_group,
+)
+from .receive_handlers import (
+    notify_update_chat,
+    send_chat_messages,
+    send_chats,
+    send_current_user_info,
+    send_message_to_chat,
+    send_read_receipt,
+)
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -25,31 +43,33 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.user = self.scope['user']
 
-        self.chat_session = await database_sync_to_async(
-            create_chat_session)(self.user)
+        self.chat_session = await create_chat_session(self.user)
 
-        self.chats_list_ids = await database_sync_to_async(get_user_chat_ids)(
-            self.user)
+        async def set_chats_list_ids(consumer):
+            consumer.chats_list_ids = await get_user_chat_ids(self.user)
 
-        self.contacts_list_ids = await database_sync_to_async(
-            get_user_contacts_ids)(self.user)
+        async def set_user_contacts_ids(consumer):
+            consumer.contacts_list_ids = await get_user_contacts_ids(self.user)
 
-        # groups to receive chat messages
-        await add_to_chat_groups(self.chats_list_ids, self.channel_name)
+        await asyncio.gather(
+            set_chats_list_ids(self),
+            set_user_contacts_ids(self)
+        )
 
-        # groups to receive contacts online statuses
-        await add_to_user_online_status_groups(
-            self.contacts_list_ids, self.channel_name, self.user
+        await asyncio.gather(
+            add_to_chat_groups(self.chats_list_ids, self.channel_name),
+            add_to_user_online_status_groups(
+                self.contacts_list_ids, self.channel_name, self.user)
         )
 
         await self.accept()
 
     async def disconnect(self, close_code):
-        await database_sync_to_async(delete_chat_session)(self.chat_session)
+        await delete_chat_session(self.chat_session)
 
         await discard_chanel_from_chat_groups(
             self.chats_list_ids, self.channel_name)
-        
+
         await discard_channel_from_user_statuses_group(
             self.contacts_list_ids, self.channel_name, self.user)
 
@@ -60,7 +80,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def send_message(self, event):
         payload = event['payload']
-        message = await database_sync_to_async(retrieve_message)(
+        message = await retrieve_message(
             payload['chat_id'],
             payload['id'],
             user=self.user
@@ -77,7 +97,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         }))
 
     async def message_read(self, event):
-        unread_count = await database_sync_to_async(get_unread_messages_count)(
+        unread_count = await get_unread_messages_count(
             self.user, event['payload']['chat_id']
         )
         event['payload']['total_unread_count'] = unread_count
@@ -87,7 +107,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         }
         await self.send(text_data=json.dumps(response_data))
 
-    async def update_chat(self, event):
+    async def refetch_chat(self, event):
         updated_chat = await database_sync_to_async(retrieve_chat)(
             self.user, event['payload']
         )

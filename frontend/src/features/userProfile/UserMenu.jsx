@@ -4,12 +4,10 @@ import MenuItem from "./MenuItem";
 import Exit from "/exit.svg";
 import { useAuth } from "../../contexts/AuthContext";
 import { useWebsoket } from "../../contexts/WebsockerContext";
+import { FullHeightContainer } from "../../ui/FullHeightContainer";
 
-const Container = styled.div`
+const Container = styled(FullHeightContainer)`
   padding: var(--Spacing-8, 8px) var(--Spacing-0, 0px);
-  display: flex;
-  flex-direction: column;
-  height: 100%;
 `;
 
 export default function UserMenu() {

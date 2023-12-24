@@ -1,18 +1,22 @@
 import json
 
-from channels.layers import get_channel_layer
 from channels.db import database_sync_to_async
+from channels.layers import get_channel_layer
 
-from .crud import (create_message, get_chat_messages, get_user_chats, 
-                   create_read_receipt, get_user_info)
-
+from .crud import (
+    create_message,
+    create_read_receipt,
+    get_chat_messages,
+    get_user_chats,
+    get_user_info,
+)
 
 channel_layer = get_channel_layer()
 
 
 async def send_message_to_chat(consumer, action, *args, **kwargs):
     chat_id = action['payload']['chat_id']
-    message = await database_sync_to_async(create_message)(
+    message = await create_message(
         consumer.user.id, chat_id, action['payload']['text']
     )
     action['payload'] = message
@@ -49,18 +53,20 @@ async def send_read_receipt(consumer, action, *args, **kwargs):
 
 async def notify_update_chat(consumer, action, *args, **kwargs):
     chat_id = action['payload']
+    print('this is chat:', chat_id)
     if not chat_id in consumer.chats_list_ids:
         consumer.send(text_data=json.dumps({
-        'event': 'update.chat',
-        'payload': 'unknown chat id'
-    }))
+            'event': 'refetch.chat',
+            'payload': 'unknown chat id'
+        }))
+    action['type'] = 'refetch.chat'
     await channel_layer.group_send(
         f'chat_{chat_id}', action)
-    
+
 
 async def send_current_user_info(consumer, *args, **kwargs):
     current_user_data = await database_sync_to_async(get_user_info)(
-            consumer.user)
+        consumer.user)
     await consumer.send(text_data=json.dumps({
         'event': 'current.user',
         'payload': current_user_data

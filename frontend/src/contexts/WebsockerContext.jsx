@@ -45,7 +45,7 @@ function WebsoketProvider({ children }) {
 function useWebsoket() {
   const context = useContext(WebsocketContext);
   if (context === undefined)
-    throw new Error("WebsocketContext was used outside AuthProvider");
+    throw new Error("WebsocketContext was used outside WebsocketProvider");
   return context;
 }
 

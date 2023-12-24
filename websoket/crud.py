@@ -1,35 +1,48 @@
 from datetime import datetime
 
 from django.db.models import (
-    Prefetch, Subquery, OuterRef, Func, IntegerField, Q,
-    Case, When, Value, BooleanField)
-from django.db.models.expressions import Star, Exists
+    BooleanField,
+    Case,
+    F,
+    Func,
+    IntegerField,
+    OuterRef,
+    Prefetch,
+    Q,
+    Subquery,
+    Value,
+    When,
+)
+from django.db.models.expressions import Exists, Star, Value
 
-from user.models import User, UserChatSession
 from chat.models import Message, ReadRecept
+from user.models import User, UserChatSession
+
 from .serializers import (
-    ChatSerializer, MessageSerializer, UserOnlineInfoSerializer,
-    ReadReceiptSerializer, UserInfoSerializer)
+    ChatSerializer,
+    MessageSerializer,
+    ReadReceiptSerializer,
+    UserInfoSerializer,
+    UserOnlineInfoSerializer,
+)
 
 
-def get_user_chat_ids(user: User):
-    return list(user.user_chats.all().values_list('id', flat=True))
+async def get_user_chat_ids(user: User):
+    return [chat.id async for chat in user.user_chats.all()]
 
 
 def get_user_info(user: User):
     return UserInfoSerializer(user).data
 
 
-def get_user_contacts_ids(user: User):
+async def get_user_contacts_ids(user: User):
     chats = user.user_chats.filter(chat_type='PE')
-    contacts = User.objects.filter(
-        user_chats__in=chats
-    ).distinct('id').values_list('id', flat=True)
+    contacts = [user.id async for user in User.objects.filter(user_chats__in=chats).distinct('id')]
     return list(contacts)
 
 
-def create_message(author_id, chat_id, message_text):
-    message = Message.objects.create(
+async def create_message(author_id, chat_id, message_text):
+    message = await Message.objects.acreate(
         created_at=datetime.now(),
         chat_id=chat_id,
         text=message_text,
@@ -39,7 +52,7 @@ def create_message(author_id, chat_id, message_text):
 
 
 def get_chat_messages_queryset(chat_id, user=None):
-    messages = Message.objects.filter(chat_id=chat_id)
+    messages = Message.objects.filter(chat_id=chat_id).order_by('created_at')
 
     if user:
         is_read_q = Exists(ReadRecept.objects.filter(
@@ -63,9 +76,9 @@ def get_chat_messages(chat_id, user=None):
     return data
 
 
-def retrieve_message(chat_id, message_id, user=None):
+async def retrieve_message(chat_id, message_id, user=None):
     messages = get_chat_messages_queryset(chat_id, user=user)
-    message = messages.get(id=message_id)
+    message = await messages.aget(id=message_id)
     return MessageSerializer(message).data
 
 
@@ -112,26 +125,37 @@ def retrieve_chat(user: User, chat_id):
     return ChatSerializer(chat).data
 
 
-def get_unread_messages_count(user, chat_id):
-    return Message.objects.filter(
+async def get_unread_messages_count(user, chat_id):
+    return await Message.objects.filter(
         chat_id=chat_id
     ).exclude(
         Q(author=user) | Q(receipt__reader=user),
-    ).count()
+    ).acount()
 
 
-def create_chat_session(user: User):
-    return UserChatSession.objects.create(user=user)
+async def create_chat_session(user: User):
+    return await UserChatSession.objects.acreate(user=user)
 
 
-def delete_chat_session(session: UserChatSession):
+async def delete_chat_session(session: UserChatSession):
     user = session.user
     user.last_online_datetime = datetime.now()
-    user.save()
-    session.delete()
+    await user.asave()
+    await session.adelete()
 
 
-def get_user_online_status(user: User):
+async def get_user_online_status(user: User):
+    user = await User.objects.annotate(
+        is_user_online=Exists(
+            UserChatSession.objects.filter(user_id=OuterRef('id'))
+        )
+    ).annotate(
+        last_seen=Case(When(is_user_online=True, then=Value(None)),
+                       When(Q(last_online_datetime__isnull=False),
+                            then=F('last_online_datetime')),
+                       When(Q(last_login__isnull=False), then=F('last_login')),
+                       default=Value(None))
+    ).aget(id=user.id)
     return UserOnlineInfoSerializer(user).data
 
 

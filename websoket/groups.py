@@ -1,9 +1,9 @@
-from channels.layers import get_channel_layer
 from channels.db import database_sync_to_async
+from channels.layers import get_channel_layer
 
-from .crud import get_user_online_status
 from user.models import User
 
+from .crud import get_user_online_status
 
 channel_layer = get_channel_layer()
 
@@ -19,15 +19,14 @@ async def add_to_user_online_status_groups(
         # send message that current user is online
         action = {
             'type': 'user.online',
-            'payload': await database_sync_to_async(
-                get_user_online_status)(user)
+            'payload': await get_user_online_status(user)
         }
         if contact_id != user.id:
             await channel_layer.group_send(
                 f'user_status_{user.id}', action)
         await channel_layer.group_add(
             f'user_status_{contact_id}', channel_name)
-        
+
 
 async def discard_chanel_from_chat_groups(
         chats_list_ids: list[int], channel_name):
@@ -42,10 +41,8 @@ async def discard_channel_from_user_statuses_group(
             f'user_status_{contact_id}', channel_name)
         action = {
             'type': 'user.online',
-            'payload': await database_sync_to_async(
-                get_user_online_status)(user)
+            'payload': await get_user_online_status(user)
         }
         if contact_id != user.id:
             await channel_layer.group_send(
                 f'user_status_{user.id}', action)
-
